@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+<head>
+	<title>初三二班毕业典礼之欢送 Pjt</title>
+	<style>
+#canvas {
+	position: relative;
+}
+#canvas > canvas {
+	position: absolute;
+}
+canvas#stage {	z-index: 0; }
+canvas#action { z-index: 1; }
+
+#dat {
+	position: fixed;
+	z-index: 114514;
+	bottom: 20px;
+}
+#dat label {
+	display: inline-block;
+	width: 150px;
+}
+#dat input {
+	position: relative;
+}
+#dat input::after {
+    content: attr(data-v)" / ("attr(min)" ~ "attr(max)")";
+    position: absolute;
+    left: calc(100% + 20px);
+    display: block;
+    width: 100%;
+}
+	</style>
+</head>
+<body>
+	<div id="canvas">
+		<canvas id="stage"	width="600" height="600"></canvas>
+		<canvas id="action"	width="600" height="600"></canvas>
+	</div> <br />
+	<div id="dat"></div>
+	<img id="img" src="./pjt.png" style="display: none;" />
+	<script src="./main.js"></script>
+</body>
+</html>
