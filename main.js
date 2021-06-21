@@ -4,8 +4,10 @@ background-color: ${ log.c[t] }; color: white;"
 `, t, "", s)
 log.c = { V: "black" }
 
-var ctx = id => document.getElementById(id).getContext("2d")
-var J = document.getElementById("img")
+var $ = (...P) => document.querySelector(...P)
+
+var ctx = id => $("#" + id).getContext("2d")
+var J = $("#img")
 
 var u = {
 	cs: ctx("stage"),
@@ -20,24 +22,19 @@ var u = {
 		u.cs.fillStyle = [ "white", "black" ][+ v]
 		u.cs.fillRect(x * 30 + 1, y * 15 + 1, 28, 14)
 	},
-	p: (x) => {
-		if (x < 0 || x > m.mh * 30 - p.l()) {
-			p.v = 0
-			log("V", "H 0")
-			return
-		}
+	p: x => {
 		u.cs.fillStyle = "red"
-		u.cs.clearRect(m.p - 0.5, m.mh * 15, p.l() + 1,15)
-		u.cs.fillRect(m.p = x, m.mh * 15, p.l(), 15)
+		u.cs.clearRect(p.x - 0.5, m.Mh, p.l() + 1, 15)
+	p: null,
+		u.cs.fillRect(p.x = x, m.Mh, p.l(), 15)
 	}
 }
 
 var m = {
 	a: null,
-	p: null,
-	mr: 4,
-	mw: 20,
-	mh: 20,
+	mr: 4,		Mr: 4 * 15,
+	mw: 20,		Mw: 20 * 30,
+	mh: 20,		Mh: 20 * 15,
 	gen: () => {
 		m.a = Array.from({ length: m.mh }, () => [])
 		for (let r = 0; r <= m.mr; r ++)
@@ -52,22 +49,24 @@ var dat = (id, min, max, step) => {
 	$l.for = $l.innerHTML = id
 	Object.assign($s, { type: "range", id, min, max, step })
 	; [ $l, $s ].forEach($e => $d.appendChild($e))
-	document.getElementById("dat").appendChild($d)
+	$("#dat").appendChild($d)
 
-	let v
+	let v, l = true
 	const f = x => x === undefined
-		? v
-		: ($s.value = $s.dataset.v = v = x, f)
-	$s.onchange = e => f($s.value)
+		? + v
+		: (localStorage["Pjt.dat:" + id] = $s.value = $s.dataset.v = v = (l ? (l = false, localStorage["Pjt.dat:" + id]) : null) || x, f)
+	$s.onchange = () => f($s.value)
 	return f
 }
 
+var T = dat("Ms per tick", 50, 500, 50)			(50)
+
 var p = {
 	alive: true,
-	l: dat("Plate length", 10, 200, 5)(60),
-	a: dat("Plate acceleration", 0, 10, 1)(5),
-	mv: dat("Plate speed limit", 0, 30, 1)(20),
-	f: dat("Plate friction", 0, 10, 1)(1),
+	l: dat("Plate length", 10, 200, 5)			(60),
+	a: dat("Plate acceleration", 0, 10, 1)		(5),
+	mv: dat("Plate speed limit", 0, 30, 1)		(20),
+	f: dat("Plate friction", 0, 10, 1)			(1),
 	v: 0,
 
 	gen: () => {
@@ -80,33 +79,57 @@ var p = {
 			if (Math.abs(p.v) > p.mv()) p.v = d * p.mv()
 			log("V", "A " + p.v)
 		}
-		setInterval(() => {
-			if (! p.v) return
-			const d = p.v / Math.abs(p.v)
-			p.v -= d * p.f() * 0.1
-			if (p.v * d < 0) p.v = 0
-			log("V", "F " + p.v)
-			u.p(m.p + p.v)
-		}, 100)
-		u.p((m.mw / 2 - 1) * 30)
+		setInterval(p.rep, T())
+		u.p((m.Mw - p.l()) / 2)
+	},
+	rep: () => {
+		if (! p.v) return
+		const d = p.v / Math.abs(p.v)
+		p.v -= d * p.f() * 0.1
+		if (p.v * d < 0) p.v = 0
+		log("V", "F " + p.v)
+
+		let x_ = p.x + p.v
+		const lx = 0, rx = m.Mw - p.l()
+		if (x_ < lx || x_ > rx) {
+			p.v = 0
+			log("V", "H 0")
+			x_ = d < 0 ? lx : rx
+		}
+		u.p(x_)
 	}
 }
 
 var j = {
-	s: dat("Pjt size", 20, 100, 10)(60),
+	s: dat("Pjt size", 20, 100, 10)				(60),
 	x: null, y: null,
 
+	g: dat("Gravity acceleration", 1, 20, 1)	(1),
 	vx: 0, vy: 0,
 
 	gen: () => {
-		u.j((m.mw * 30 - j.s()) / 2, m.mr * 15 + 5)
+		u.j((m.Mw - j.s()) / 2, m.Mr + 5)
+
+		setInterval(j.rep, T())
+	},
+	rep: () => {
+		j.vy += j.g()
+
+		let x_ = j.x + j.vx, y_ = j.y + j.vy
+
+		const fy = m.Mh - j.s()
+		if (y_ >= fy) {
+			y_ = fy
+		}
+		u.j(x_, y_)
 	}
 }
 
 window.onload = () => {
-	m.gen()
-	p.gen()
-	j.gen()
-
-	
+	$("#start").onclick = () =>
+		[ m, p, j ].forEach(M => M.gen())
+	$("#reload").onclick = () => {
+		history.go()
+	}
 }
+

@@ -3,8 +3,16 @@
 <head>
 	<title>初三二班毕业典礼之欢送 Pjt</title>
 	<style>
+html, body {
+	margin: 0;
+}
+
 #canvas {
 	position: relative;
+	width: 600px;
+	height: 400px;
+	margin: auto;
+	border: 1px solid;
 }
 #canvas > canvas {
 	position: absolute;
@@ -15,11 +23,18 @@ canvas#action { z-index: 1; }
 #dat {
 	position: fixed;
 	z-index: 114514;
-	bottom: 20px;
+	bottom: 0;
+	width: 100%;
+	padding: 15px;
+	background: linear-gradient(90deg, silver, transparent);
+}
+#dat button {
+	position: relative;
+    top: -5px;
 }
 #dat label {
 	display: inline-block;
-	width: 150px;
+	width: 170px;
 }
 #dat input {
 	position: relative;
@@ -35,10 +50,13 @@ canvas#action { z-index: 1; }
 </head>
 <body>
 	<div id="canvas">
-		<canvas id="stage"	width="600" height="600"></canvas>
-		<canvas id="action"	width="600" height="600"></canvas>
+		<canvas id="stage"	width="600" height="400"></canvas>
+		<canvas id="action"	width="600" height="400"></canvas>
 	</div> <br />
-	<div id="dat"></div>
+	<div id="dat">
+		<button id="start">Start</button>
+		<button id="reload">Reload</button>
+	</div>
 	<img id="img" src="./pjt.png" style="display: none;" />
 	<script src="./main.js"></script>
 </body>
