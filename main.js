@@ -3,8 +3,9 @@ border-radius: 5px; padding: 0 5px;
 background-color: ${ log.c[t] }; color: white;"
 `, t, "", s)
 log.c = {
-	V: "black",
-	D: "lawngreen"
+	Vp: "black",
+	D: "lawngreen",
+	C: "orange"
 }
 
 var dat = (id, min, max, step) => {
@@ -36,7 +37,7 @@ var u = {
 
 	j: (x, y) => {
 		u.ca.clearRect(j.x, j.y, j.s(), j.s())
-		u.ca.drawImage(J, j.x = x, j.y = y, j.s(), j.s())
+		u.ca.drawImage(J, j.x = x, j.y = y, j.s(), j.s() + j.sy)
 	},
 	b: (x, y, v = 1) => {
 		m.a[x][y] = v
@@ -150,7 +151,7 @@ var p = {
 			d = d ? 1 : -1
 			p.v += d * p.a()
 			if (Math.abs(p.v) > p.mv()) p.v = d * p.mv()
-			log("V", "A " + p.v.toFixed(2))
+			log("Vp", "A " + p.v.toFixed(2))
 		}
 		T.hook(p)
 		u.p((m.Mw - p.l()) / 2)
@@ -160,13 +161,13 @@ var p = {
 		const d = p.v / Math.abs(p.v)
 		p.v -= d * p.f() * 0.1
 		if (p.v * d < 0) p.v = 0
-		log("V", "F " + p.v.toFixed(2))
+		log("Vp", "F " + p.v.toFixed(2))
 
 		let x_ = p.x + p.v
 		const lx = 0, rx = m.Mw - p.l()
 		if (x_ < lx || x_ > rx) {
 			p.v = 0
-			log("V", "H 0")
+			log("Vp", "H 0")
 			x_ = d < 0 ? lx : rx
 		}
 		u.p(x_)
@@ -175,7 +176,13 @@ var p = {
 
 var j = {
 	s: dat("Pjt size", 20, 100, 10)				(60),
+	ks: dat("Pjt spring ability", 0, 10, 1)		(3),
+	vs: dat("Pjt spring speed", 0, 10, 1)		(3),
+	es: dat("Pjt spring efficiency", 0, 100, 5)	(100),
 	x: null, y: null,
+
+	fy: null, sy: null, Msy: null,
+	S: null,
 
 	g: dat("Gravity acceleration", 1, 20, 1)	(1),
 	vx: 0, vy: 0,
@@ -183,27 +190,76 @@ var j = {
 	ctr: () => [ j.x + j.s() / 2, j.y + j.s() / 2 ],
 
 	gen: () => {
+		j.S = "M"
 		u.j((m.Mw - j.s()) / 2, m.Mr + 5)
 
 		T.hook(j)
 	},
 	rep: () => {
-		j.vy += j.g()
+		switch (j.S) {
+		case "M":
+			j.vy += j.g()
 
-		let x_ = j.x + j.vx, y_ = j.y + j.vy
+			let x_ = j.x + j.vx, y_ = j.y + j.vy
 
-		const fy = m.Mh - j.s()
-		if (y_ >= fy) {
-			y_ = fy
+			j.fy = m.Mh - j.s()
+			if (y_ >= j.fy) {
+				y_ = j.fy
+				const fx = j.ctr()[0]
+				
+				if (fx >= p.x && fx <= p.x + p.l()) {
+					j.Msy = - j.g() / (j.ks() * 0.01)
+					j.sy = 0
+
+					j.S = "D-"
+
+					log("C", "j => p")
+				}
+			}
+			u.j(x_, y_)
+
+			break
+
+		case "D-":
+			j.sy -= j.vs()
+			if (j.sy <= j.Msy) {
+				j.sy = j.Msy
+				j.S = "D+"
+			}
+			u.j(j.x, j.fy - j.sy)
+			break
+		case "D+":
+			j.sy += j.vs()
+			if (j.sy >= 0) {
+				j.sy = 0
+				j.S = "M"
+				j.vy = - j.vy * j.es() * 0.01
+			}
+			u.j(j.x, j.fy - j.sy)
+			break
 		}
-		u.j(x_, y_)
 	}
 }
 
 window.onload = () => {
-	$("#start").onclick = () =>
-		[ m, p, j, D, T ].forEach(M => M.gen())
+	const $s = $("#start")
+	const start = $s.onclick = () => {
+		$s.disabled = "disabled"
+		; [ m, p, j, D, T ].forEach(M => M.gen())
+	}
+
+	if (localStorage["Pjt.start"] === "reload") {
+		localStorage["Pjt.start"] = undefined
+		start()
+	}
+
 	$("#reload").onclick = () => {
+		localStorage["Pjt.start"] = "reload"
+		history.go()
+	}
+
+	$("#recover").onclick = () => {
+		localStorage.clear()
 		history.go()
 	}
 }
