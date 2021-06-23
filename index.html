@@ -8,43 +8,56 @@ html, body {
 }
 
 #canvas {
-	position: relative;
+	position: fixed;
+	top: 0; right: 0;
 	width: 600px;
 	height: 400px;
-	margin: auto;
+
 	border: 1px solid;
 }
 #canvas > canvas {
 	position: absolute;
 }
-canvas#stage {	z-index: 0; }
-canvas#action { z-index: 1; }
+canvas#stage	{ z-index: 0; }
+canvas#action	{ z-index: 1; }
+canvas#debug	{ z-index: 2; }
 
 #dat {
 	position: fixed;
 	z-index: 114514;
-	bottom: 0;
-	width: 100%;
+	top: 0; left: 0;
+
+	width: calc(100% - 600px - 30px);
+	height: calc(100% - 30px);
 	padding: 15px;
+
 	background: linear-gradient(90deg, silver, transparent);
+
+    overflow-y: auto;
 }
+#dat::-webkit-scrollbar { display: none; }
+#dat {
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
 #dat button {
 	position: relative;
     top: -5px;
 }
 #dat label {
 	display: inline-block;
-	width: 170px;
+	width: 230px;
 }
 #dat input {
 	position: relative;
 }
-#dat input::after {
+#dat input[type=range]::after {
     content: attr(data-v)" / ("attr(min)" ~ "attr(max)")";
     position: absolute;
     left: calc(100% + 20px);
     display: block;
-    width: 100%;
+    width: 300px;
 }
 	</style>
 </head>
@@ -52,6 +65,7 @@ canvas#action { z-index: 1; }
 	<div id="canvas">
 		<canvas id="stage"	width="600" height="400"></canvas>
 		<canvas id="action"	width="600" height="400"></canvas>
+		<canvas id="debug"	width="600" height="400"></canvas>
 	</div> <br />
 	<div id="dat">
 		<button id="start">Start</button>
