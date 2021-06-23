@@ -1,0 +1,60 @@
+html, body {
+	margin: 0;
+}
+
+#canvas {
+	position: fixed;
+	top: 0; right: 0;
+	width: 600px;
+	height: 400px;
+
+	border: 1px solid;
+}
+#canvas > canvas {
+	position: absolute;
+}
+canvas#stage	{ z-index: 0; }
+canvas#action	{ z-index: 1; }
+canvas#debug	{ z-index: 2; }
+
+#dat {
+	position: fixed;
+	z-index: 114514;
+	top: 0; left: 0;
+
+	width: calc(100% - 600px - 30px);
+	height: calc(100% - 30px);
+	padding: 15px;
+
+	background: linear-gradient(90deg, silver, transparent);
+
+    overflow-y: auto;
+}
+#dat::-webkit-scrollbar { display: none; }
+#dat {
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+#dat button {
+	position: relative;
+    top: -5px;
+}
+#dat label {
+	display: inline-block;
+	width: 230px;
+}
+#dat input {
+	position: relative;
+}
+#dat input[type=range]::after {
+    content: attr(data-v)" / ("attr(min)" ~ "attr(max)")";
+    position: absolute;
+    left: calc(100% + 20px);
+    display: block;
+    width: 150px;
+
+	color: black;
+    text-shadow: 0 0 5px silver;
+}
+

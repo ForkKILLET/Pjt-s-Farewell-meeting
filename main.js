@@ -36,8 +36,8 @@ var u = {
 	cd: ctx("debug"),
 
 	j: (x, y) => {
-		u.ca.clearRect(j.x, j.y, j.s(), j.s())
-		u.ca.drawImage(J, j.x = x, j.y = y, j.s(), j.s() + j.sy)
+		u.ca.clearRect(j.x, j.y, ...j.sz())
+		u.ca.drawImage(J, j.x = x, j.y = y, ...j.sz())
 	},
 	b: (x, y, v = 1) => {
 		m.a[x][y] = v
@@ -46,8 +46,8 @@ var u = {
 	},
 	p: x => {
 		u.cs.fillStyle = "red"
-		u.cs.clearRect(p.x - 0.5, m.Mh, p.l() + 1, 15)
-		u.cs.fillRect(p.x = x, m.Mh, p.l(), 15)
+		u.cs.clearRect(p.x - 0.5, p.y, p.l() + 1, 15)
+		u.cs.fillRect(p.x = x, p.y, ...p.sz())
 	}
 }
 
@@ -60,12 +60,10 @@ var D = {
 	hook: f => {
 		log("D", "Hook #" + D.hid)
 		T._h[D.hid ++] = f
-	},
-
-	globalClear: () => {
-		D.hook(() => u.cd.clearRect(0, 0, 600, 400))
 		return D
 	},
+
+	globalClear: () => D.hook(() => u.cd.clearRect(0, 0, 600, 400)),
 
 	watchMovement: (o, d) => {
 		const
@@ -74,7 +72,7 @@ var D = {
 
 		let ctr, pvx, pvy
 
-		D.hook(() => {
+		return D.hook(() => {
 			ctr = o.ctr()
 
 			u.cd.strokeStyle = "transparent"
@@ -101,15 +99,35 @@ var D = {
 			else pvy = null
 			u.cd.stroke()
 		})
-
-		return D
 	},
+
+	watchBox: o => D.hook(() => {
+		u.cd.strokeStyle = "lawngreen"
+		u.cd.strokeRect(o.x, o.y, ...o.sz())
+	}),
 
 	gen: () => {
 		if (D.on()) D
 			.globalClear()
 			.watchMovement(p, "x")
+			.watchBox(p)
 			.watchMovement(j, "xy")
+			.watchBox(j)
+	}
+}
+
+var G = {
+	alive: true,
+	die: () => {
+		clearInterval(T.tid)
+
+		G.alive = false
+
+		u.cs.font = "40px Serif"
+		u.cs.textAlign = "center"
+		u.cs.fillStyle = "red"
+
+		u.cs.fillText("Pjt over", 300, 200)
 	}
 }
 
@@ -128,24 +146,28 @@ var m = {
 
 var T = dat("Ms per tick", 50, 500, 50)			(50)
 Object.assign(T, {
+	tid: null,
 	_h: [],
 	hook: o => T._h.push(() => o.rep()),
-	gen: () => setInterval(() => T._h.forEach(f => f()), T())
+	gen: () => T.tid = setInterval(() => T._h.forEach(f => f()), T())
 })
 
 var p = {
-	alive: true,
 	l: dat("Plate length", 10, 200, 5)			(60),
 	a: dat("Plate acceleration", 0, 10, 1)		(5),
 	mv: dat("Plate speed limit", 0, 30, 1)		(20),
 	f: dat("Plate friction", 0, 10, 1)			(1),
-	v: 0,
 
-	ctr: () => [ p.x + p.l() / 2, m.Mh + 15 / 2 ],
+	v: 0,
+	x: null, y: m.Mh,
+
+	ctr: () => [ p.x + p.l() / 2, p.y + 15 / 2 ],
+	sz: () => [ p.l(), 15 ],
 
 	gen: () => {
 		window.onkeydown = e => {
-			if (! p.alive) return
+			if (! G.alive) return
+
 			let d = [ "ArrowLeft",  "ArrowRight" ].indexOf(e.key)
 			if (d < 0) return
 			d = d ? 1 : -1
@@ -187,7 +209,8 @@ var j = {
 	g: dat("Gravity acceleration", 1, 20, 1)	(1),
 	vx: 0, vy: 0,
 
-	ctr: () => [ j.x + j.s() / 2, j.y + j.s() / 2 ],
+	ctr: () => [ j.x + j.s() / 2, j.y + (j.s() + j.sy) / 2 ],
+	sz: () => [ j.s(), j.s() + j.sy ],
 
 	gen: () => {
 		j.S = "M"
@@ -215,6 +238,7 @@ var j = {
 
 					log("C", "j => p")
 				}
+				else G.die()
 			}
 			u.j(x_, y_)
 
