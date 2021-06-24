@@ -68,9 +68,10 @@ var u = {
 }
 
 var D = {
-	on: dat("If debug")							(false),
+	iO: dat("If debug")							(false),
 
 	vk: dat("Movement line scale", 1, 15, 1)	(5),
+	iR: dat("If resultant force")				(true),
 
 	hid: 100,
 	hook: f => {
@@ -86,7 +87,7 @@ var D = {
 			vx = { x: "v", y: null, xy: "vx" }[d],
 			vy = { x: null, y: "v", xy: "vy" }[d]
 
-		let ctr, pvx, pvy
+		let ctr
 
 		return D.hook(() => {
 			ctr = o.ctr()
@@ -101,18 +102,20 @@ var D = {
 			u.cd.strokeStyle = "blue"
 			u.cd.lineWidth = 1
 			u.cd.beginPath()
-			if (o[vx]) {
+			if (D.iR && o[vx] && o[vy]) {
 				u.cd.moveTo(...ctr)
-				pvx = [ ctr[0] + o[vx] * D.vk(), ctr[1] ]
-				u.cd.lineTo(...pvx)
+				u.cd.lineTo(ctr[0] + o[vx] * D.vk(), ctr[1] + o[vy] * D.vk())
 			}
-			else pvx = null
-			if (o[vy]) {
-				u.cd.moveTo(...ctr)
-				pvy = [ ctr[0], ctr[1] + o[vy] * D.vk() ]
-				u.cd.lineTo(...pvy)
+			else {
+				if (o[vx]) {
+					u.cd.moveTo(...ctr)
+					u.cd.lineTo(ctr[0] + o[vx] * D.vk(), ctr[1])
+				}
+				if (o[vy]) {
+					u.cd.moveTo(...ctr)
+					u.cd.lineTo(ctr[0], ctr[1] + o[vy] * D.vk())
+				}
 			}
-			else pvy = null
 			u.cd.stroke()
 		})
 	},
@@ -123,7 +126,7 @@ var D = {
 	}),
 
 	gen: () => {
-		if (D.on()) D
+		if (D.iO()) D
 			.globalClear()
 			.watchMovement(p, "x")
 			.watchBox(p)
