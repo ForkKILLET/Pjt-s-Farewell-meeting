@@ -247,25 +247,28 @@ var j = {
 				const fx = j.ctr()[0]
 				
 				if (fx >= p.x && fx <= p.x + p.l()) {
-					log("C", "j -> p")
+					log("C", "Plate")
 
 					j.sy = 0
 					j.S = "D-"
 
 					j.vx += p.v * p.μ()
+					j.vy = - j.vy * j.es()
 				}
 				else {
-					log("C", "j -> f")
+					log("C", "Floor")
 					G.die()
 				}
+			}
+			else {
+				if (y_ < m.Mh) ;
+				j.vy += j.g()
 			}
 
 			if (x_ < 0) x_ += 600
 			if (x_ > 600) x_ -= 600
 
 			u.j(x_, y_)
-
-			j.vy += j.g()
 
 			break
 
@@ -282,8 +285,6 @@ var j = {
 			if (j.sy >= 0) {
 				j.sy = 0
 				j.S = "M"
-
-				j.vy = - j.vy * j.es()
 			}
 			u.j(j.x, j.fy - j.sy)
 			break
