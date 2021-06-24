@@ -8,8 +8,21 @@ log.c = {
 	C: "orange"
 }
 
+var L = new Proxy({
+	clear: () => localStorage.clear()
+}, {
+	get: (_, K) => {
+		if ([ "clear" ].includes(K)) return _[K]
+		const V = localStorage.getItem(K)
+		return V ? JSON.parse(V) : V
+	},
+	set: (_, K, V) => localStorage.setItem(K, JSON.stringify(V)),
+	deleteProperty: (_, K) => localStorage.removeItem(K)
+})
+
 var dat = (id, min, max, step) => {
-	const b = id.startsWith("If "), K = b ? "checked" : "value"
+	const b = id.startsWith("If "), A = b ? "checked" : "value"
+	const p = id.endsWith(" %")
 	const [ $d, $l, $s ] = [ "div", "label", "input" ].map(l => document.createElement(l))
 
 	$l.for = $l.innerHTML = id
@@ -18,10 +31,13 @@ var dat = (id, min, max, step) => {
 	$("#dat").appendChild($d)
 
 	let v, l = true
-	const f = x => x === undefined
-		? v
-		: (localStorage["Pjt.dat:" + id] = $s[K] = $s.dataset.v = v = eval((l ? (l = false, localStorage["Pjt.dat:" + id]) : null) ?? x), f)
-	$s.onchange = () => f($s[K])
+	const f = x => {
+		if (x === undefined) return p ? v * .01 : v
+		L["dat:" + id] = $s[A] = $s.dataset.v = v = (l ? L["dat:" + id] : null) ?? x
+		l = false
+		return f
+	}
+	$s.addEventListener("change", () => f(+ $s[A]))
 	return f
 }
 
@@ -54,11 +70,11 @@ var u = {
 var D = {
 	on: dat("If debug")							(false),
 
-	vk: dat("Velocity line scale", 1, 15, 1)	(5),
+	vk: dat("Movement line scale", 1, 15, 1)	(5),
 
 	hid: 100,
 	hook: f => {
-		log("D", "Hook #" + D.hid)
+		log("D", "#" + D.hid)
 		T._h[D.hid ++] = f
 		return D
 	},
@@ -154,9 +170,10 @@ Object.assign(T, {
 
 var p = {
 	l: dat("Plate length", 10, 200, 5)			(60),
-	a: dat("Plate acceleration", 0, 10, 1)		(5),
-	mv: dat("Plate speed limit", 0, 30, 1)		(20),
-	f: dat("Plate friction", 0, 10, 1)			(1),
+	a: dat("Plate acceleration", 1, 10, 1)		(5),
+	Mv: dat("Plate speed limit", 1, 30, 1)		(20),
+	r: dat("Plate resistance", 0, 10, 1)		(1),
+	μ: dat("Plate friction %", 0, 100, 5)		(50),
 
 	v: 0,
 	x: null, y: m.Mh,
@@ -165,23 +182,23 @@ var p = {
 	sz: () => [ p.l(), 15 ],
 
 	gen: () => {
-		window.onkeydown = e => {
+		window.addEventListener("keydown", e => {
 			if (! G.alive) return
 
 			let d = [ "ArrowLeft",  "ArrowRight" ].indexOf(e.key)
 			if (d < 0) return
 			d = d ? 1 : -1
 			p.v += d * p.a()
-			if (Math.abs(p.v) > p.mv()) p.v = d * p.mv()
+			if (Math.abs(p.v) > p.Mv()) p.v = d * p.Mv()
 			log("Vp", "A " + p.v.toFixed(2))
-		}
+		})
 		T.hook(p)
 		u.p((m.Mw - p.l()) / 2)
 	},
 	rep: () => {
 		if (! p.v) return
 		const d = p.v / Math.abs(p.v)
-		p.v -= d * p.f() * 0.1
+		p.v -= d * p.r() * 0.1
 		if (p.v * d < 0) p.v = 0
 		log("Vp", "F " + p.v.toFixed(2))
 
@@ -198,12 +215,12 @@ var p = {
 
 var j = {
 	s: dat("Pjt size", 20, 100, 10)				(60),
-	ks: dat("Pjt spring ability", 0, 10, 1)		(3),
-	vs: dat("Pjt spring speed", 0, 10, 1)		(3),
-	es: dat("Pjt spring efficiency", 0, 100, 5)	(100),
+	ds: dat("Pjt spring deformation", 1, 50, 5)	(10),
+	vs: dat("Pjt spring speed", 1, 20, 1)		(10),
+	es: dat("Pjt spring energy %", 0, 120, 5)	(100),
 	x: null, y: null,
 
-	fy: null, sy: null, Msy: null,
+	fy: null, sy: null,
 	S: null,
 
 	g: dat("Gravity acceleration", 1, 20, 1)	(1),
@@ -221,33 +238,41 @@ var j = {
 	rep: () => {
 		switch (j.S) {
 		case "M":
-			j.vy += j.g()
-
 			let x_ = j.x + j.vx, y_ = j.y + j.vy
 
 			j.fy = m.Mh - j.s()
 			if (y_ >= j.fy) {
 				y_ = j.fy
+
 				const fx = j.ctr()[0]
 				
 				if (fx >= p.x && fx <= p.x + p.l()) {
-					j.Msy = - j.g() / (j.ks() * 0.01)
-					j.sy = 0
+					log("C", "j -> p")
 
+					j.sy = 0
 					j.S = "D-"
 
-					log("C", "j => p")
+					j.vx += p.v * p.μ()
 				}
-				else G.die()
+				else {
+					log("C", "j -> f")
+					G.die()
+				}
 			}
+
+			if (x_ < 0) x_ += 600
+			if (x_ > 600) x_ -= 600
+
 			u.j(x_, y_)
+
+			j.vy += j.g()
 
 			break
 
 		case "D-":
 			j.sy -= j.vs()
-			if (j.sy <= j.Msy) {
-				j.sy = j.Msy
+			if (j.sy <= - j.ds()) {
+				j.sy = - j.ds()
 				j.S = "D+"
 			}
 			u.j(j.x, j.fy - j.sy)
@@ -257,7 +282,8 @@ var j = {
 			if (j.sy >= 0) {
 				j.sy = 0
 				j.S = "M"
-				j.vy = - j.vy * j.es() * 0.01
+
+				j.vy = - j.vy * j.es()
 			}
 			u.j(j.x, j.fy - j.sy)
 			break
@@ -266,25 +292,32 @@ var j = {
 }
 
 window.onload = () => {
-	const $s = $("#start")
-	const start = $s.onclick = () => {
-		$s.disabled = "disabled"
-		; [ m, p, j, D, T ].forEach(M => M.gen())
+	const actions = {
+		start: () => {
+			$("#start").disabled = "disabled"
+			; [ m, p, j, D, T ].forEach(M => M.gen())
+		},
+		reload: () => {
+			L.start = "reload"
+			history.go()
+		},
+		clear: () => {
+			L.clear()
+			history.go()
+		}
 	}
 
-	if (localStorage["Pjt.start"] === "reload") {
-		localStorage["Pjt.start"] = undefined
-		start()
+	if (L.start === "reload") {
+		delete L.start
+		actions.start()
 	}
 
-	$("#reload").onclick = () => {
-		localStorage["Pjt.start"] = "reload"
-		history.go()
+	const k = {}
+	for (let [ a, f ] of Object.entries(actions)) {
+		$("#" + a).addEventListener("click", f)
+		k[a[0]] = f
 	}
 
-	$("#recover").onclick = () => {
-		localStorage.clear()
-		history.go()
-	}
+	window.addEventListener("keypress", e => k[e.key]?.())
 }
 
