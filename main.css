@@ -2,6 +2,20 @@ html, body {
 	margin: 0;
 }
 
+@media (max-width: 480px) {
+	body {
+		font-size: 36px;
+	}
+}
+@media (min-width: 481px) and (max-width: 767px) {
+	body {
+		font-size: 30px;
+	}
+}
+@media (min-width: 768px) {
+
+}
+
 #canvas {
 	position: fixed;
 	top: 0; right: 0;

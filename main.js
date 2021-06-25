@@ -1,12 +1,22 @@
-var log = (t, s) => console.log("%c%s%c %s", `
-border-radius: 5px; padding: 0 5px;
-background-color: ${ log.c[t] }; color: white;"
-`, t, "", s)
-log.c = {
-	Vp: "black",
-	D: "lawngreen",
-	C: "orange"
+var log = (t, s, D) => {
+	console.log("%c%s%c %s", `
+		border-radius: 5px; padding: 0 5px;
+		background-color: ${ log.c[t] }; color: white;"
+	`, t, "", s)
+
+	log._h.forEach(({ t: t_, r, f }) => {
+		if (t === t_ && s.match(r)) f(D)
+	})
 }
+Object.assign(log, {
+	c: {
+		Vp:	"black",
+		D:	"lawngreen",
+		C:	"orange",
+		G:	"silver"
+	},
+	_h: []
+})
 
 var L = new Proxy({
 	clear: () => localStorage.clear()
@@ -55,14 +65,14 @@ var u = {
 		u.ca.clearRect(j.x, j.y, ...j.sz())
 		u.ca.drawImage(J, j.x = x, j.y = y, ...j.sz())
 	},
-	b: (x, y, v = 1) => {
+	b: (x, y, v) => {
 		m.a[x][y] = v
-		u.cs.fillStyle = [ "white", "black" ][+ v]
+		u.cs.fillStyle = m.T[v].c
 		u.cs.fillRect(x * 30 + 1, y * 15 + 1, 28, 14)
 	},
 	p: x => {
 		u.cs.fillStyle = "red"
-		u.cs.clearRect(p.x - 0.5, p.y, p.l() + 1, 15)
+		u.cs.clearRect(p.x - .5, p.y, p.l() + 1, 15)
 		u.cs.fillRect(p.x = x, p.y, ...p.sz())
 	}
 }
@@ -74,13 +84,18 @@ var D = {
 	iR: dat("If resultant force")				(true),
 
 	hid: 100,
-	hook: f => {
-		log("D", "#" + D.hid)
+	h_rep: f => {
+		log("D", "rep #" + D.hid)
 		T._h[D.hid ++] = f
 		return D
 	},
+	h_log: (t, r, f) => {
+		log("D", "log #" + D.hid)
+		log._h[D.hid ++] = { t, r, f }
+		return D
+	},
 
-	globalClear: () => D.hook(() => u.cd.clearRect(0, 0, 600, 400)),
+	globalClear: () => D.h_rep(() => u.cd.clearRect(0, 0, 600, 400)),
 
 	watchMovement: (o, d) => {
 		const
@@ -89,7 +104,7 @@ var D = {
 
 		let ctr
 
-		return D.hook(() => {
+		return D.h_rep(() => {
 			ctr = o.ctr()
 
 			u.cd.strokeStyle = "transparent"
@@ -120,10 +135,22 @@ var D = {
 		})
 	},
 
-	watchBox: o => D.hook(() => {
+	watchBox: o => D.h_rep(() => {
 		u.cd.strokeStyle = "lawngreen"
 		u.cd.strokeRect(o.x, o.y, ...o.sz())
 	}),
+
+	watchBlockCollision: () => {
+		const bs = []
+		return D.h_log("C", /^Block/, P => bs.push(P)).h_rep(() => {
+			while (bs.length) {
+				const { c, r } = bs.pop()
+
+				u.cd.strokeStyle = "red"
+				u.cd.strokeRect(c * 30, r * 15, 30, 15)
+			}
+		})
+	},
 
 	gen: () => {
 		if (D.iO()) D
@@ -132,15 +159,22 @@ var D = {
 			.watchBox(p)
 			.watchMovement(j, "xy")
 			.watchBox(j)
+			.watchBlockCollision()
 	}
 }
 
 var G = {
-	alive: true,
-	die: () => {
-		clearInterval(T.tid)
+	start: () => {
+		log("G", "Start")
+		G.alive = true
 
+		; [ m, p, j, D, T ].forEach(M => M.gen())
+	},
+	die: () => {
+		log("G", "Die")
 		G.alive = false
+
+		clearInterval(T.tid)
 
 		u.cs.font = "40px Serif"
 		u.cs.textAlign = "center"
@@ -152,14 +186,36 @@ var G = {
 
 var m = {
 	a: null,
-	mr: 4,		Mr: 4 * 15,
+	mr: 4,		Mr: (4 + 1) * 15,
 	mw: 20,		Mw: 20 * 30,
 	mh: 20,		Mh: 20 * 15,
+
+	T: {
+		empty:	{ c: "white",		p: 10 },
+		normal:	{ c: "black",		p: 60 },
+		paddy:	{ c: "yellow",		p: 20 },
+		sticky: { c: "springgreen",	p: 10 },
+		
+		map: f => {
+			for (let K in m.T) if (K !== "map") if (f(m.T[K], K) === false) return
+		}
+	},
+
 	gen: () => {
 		m.a = Array.from({ length: m.mh }, () => [])
-		for (let r = 0; r <= m.mr; r ++)
-			for (let c = 0; c < m.mw; c ++)
-				u.b(c, r, ~~ (Math.random() * 100) < (m.mr - r) * 20)
+
+		let pa = 0
+		m.T.map(V => pa = V.p += pa)
+
+		for (let r = 0; r <= m.mr; r ++) for (let c = 0; c < m.mw; c ++) {
+			const p =  ~~ (Math.random() * 100)
+			m.T.map((V, K) => {
+				if (p < V.p) {
+					u.b(c, r, K)
+					return false
+				}
+			})
+		}
 	}
 }
 
@@ -172,10 +228,10 @@ Object.assign(T, {
 })
 
 var p = {
-	l: dat("Plate length", 10, 200, 5)			(60),
+	l: dat("Plate length", 10, 200, 5)			(100),
 	a: dat("Plate acceleration", 1, 10, 1)		(5),
 	Mv: dat("Plate speed limit", 1, 30, 1)		(20),
-	r: dat("Plate resistance", 0, 10, 1)		(1),
+	r: dat("Plate resistance", .1, 1, .1)		(1),
 	μ: dat("Plate friction %", 0, 100, 5)		(50),
 
 	v: 0,
@@ -196,12 +252,13 @@ var p = {
 			log("Vp", "A " + p.v.toFixed(2))
 		})
 		T.hook(p)
-		u.p((m.Mw - p.l()) / 2)
+
+		if (G.alive) u.p((m.Mw - p.l()) / 2)
 	},
 	rep: () => {
 		if (! p.v) return
 		const d = p.v / Math.abs(p.v)
-		p.v -= d * p.r() * 0.1
+		p.v -= d * p.r()
 		if (p.v * d < 0) p.v = 0
 		log("Vp", "F " + p.v.toFixed(2))
 
@@ -234,7 +291,7 @@ var j = {
 
 	gen: () => {
 		j.S = "M"
-		u.j((m.Mw - j.s()) / 2, m.Mr + 5)
+		u.j((m.Mw - j.s()) / 2, m.Mr)
 
 		T.hook(j)
 	},
@@ -264,7 +321,20 @@ var j = {
 				}
 			}
 			else {
-				if (y_ < m.Mh) ;
+				if (y_ < m.Mr) {
+					const lc = Math.max(~~ (x_ / 30), 0), rc = Math.min(~~ ((x_ + j.s()) / 30 - .5), m.mw)
+					const ur = Math.max(~~ (y_ / 15), 0), dr = Math.min(~~ ((y_ + j.s()) / 15 - .5), m.mr)
+					const R = j.s() / 2, cx = x_ + R, cy = y_ + R
+
+					for (let r = ur; r <= dr; r ++) for (let c = lc; c <= rc; c ++) {
+						if (Math.sqrt(
+							Math.min(Math.abs(cx - c * 30), Math.abs(cx - (c + 1) * 30)) ** 2 +
+							Math.min(Math.abs(cy - r * 15), Math.abs(cy - (r + 1) * 15)) ** 2
+						) < R) {
+							log("C", `Block (${c}, ${r})`, { c, r })
+						}
+					}
+				}
 				j.vy += j.g()
 			}
 
@@ -283,6 +353,7 @@ var j = {
 			}
 			u.j(j.x, j.fy - j.sy)
 			break
+
 		case "D+":
 			j.sy += j.vs()
 			if (j.sy >= 0) {
@@ -299,7 +370,7 @@ window.onload = () => {
 	const actions = {
 		start: () => {
 			$("#start").disabled = "disabled"
-			; [ m, p, j, D, T ].forEach(M => M.gen())
+			G.start()
 		},
 		reload: () => {
 			L.start = "reload"
