@@ -165,44 +165,53 @@ var D = {
 
 var G = {
 	pts: 0,
+	playing: false,
+
 	start: () => {
 		log("G", "Start")
-		G.alive = true
+		G.playing = true
 
 		; [ m, p, j, D, T ].forEach(M => M.gen())
 	},
-	die: () => {
-		log("G", "Die")
-		G.alive = false
+	end: t => {
+		G.playing = false
+
+		u.ca.font = "40px Serif"
+		u.ca.textAlign = "center"
+		u.ca.fillStyle = "red"
+		u.ca.fillText(t, 300, 200)
 
 		clearInterval(T.tid)
+	},
 
-		u.cs.font = "40px Serif"
-		u.cs.textAlign = "center"
-		u.cs.fillStyle = "red"
-
-		u.cs.fillText(`Pjt over, ${G.pts}pts`, 300, 200)
+	over: () => {
+		log("G", "Over")
+		G.end(`Pjt over, ${G.pts}pts`)
+	},
+	clear: () => {
+		log("G", "Clear")
+		G.end(`Stage clear, ${G.pts}pts`)
 	}
 }
 
 var m = {
-	a: null,
+	a: null, b: 0,
+
 	mr: 4,		Mr: (4 + 1) * 15,
 	mw: 20,		Mw: 20 * 30,
 	mh: 20,		Mh: 20 * 15,
 
 	T: {
 		empty:	{ c: "white",		p: 10 },
-
-		normal:	{ c: "black",		p: 60, pts: 1 },
-		paddy:	{ c: "yellow",		p: 20, pts: 1,
-			f: () => j.vy = - j.vy + 1
+		normal:	{ c: "black",		p: 60,	pts: 1
 		},
-		sticky: { c: "springgreen",	p: 10, pts: 3,
+		paddy:	{ c: "yellow",		p: 25,	pts: 1,
+			a: dat("Block.paddy acceleration", .1, 2, .1) (1),
+			f: () => j.vy = - j.vy + m.T.paddy.a()
+		},
+		sticky: { c: "springgreen",	p: 5,	pts: 3,
 			a: dat("Block.sticky deceleration", .1, 1, .1) (.3),
-			f: () => {
-				j.S = "SM"
-			}
+			f: () => j.S = "SM"
 		},
 
 		map: f => {
@@ -220,6 +229,7 @@ var m = {
 			const p =  ~~ (Math.random() * 100)
 			m.T.map((V, K) => {
 				if (p < V.p) {
+					if (K !== "empty") m.b ++
 					u.b(c, r, K)
 					return false
 				}
@@ -251,7 +261,7 @@ var p = {
 
 	gen: () => {
 		window.addEventListener("keydown", e => {
-			if (! G.alive) return
+			if (! G.playing) return
 
 			let d = [ "ArrowLeft",  "ArrowRight" ].indexOf(e.key)
 			if (d < 0) return
@@ -262,7 +272,7 @@ var p = {
 		})
 		T.hook(p)
 
-		if (G.alive) u.p((m.Mw - p.l()) / 2)
+		if (G.playing) u.p((m.Mw - p.l()) / 2)
 	},
 	rep: () => {
 		if (! p.v) return
@@ -327,7 +337,7 @@ var j = {
 				}
 				else {
 					log("C", "Floor")
-					G.die()
+					G.over()
 				}
 			}
 			else {
@@ -349,6 +359,8 @@ var j = {
 
 							if (V.f) V.f()
 							G.pts += V.pts
+
+							if (! -- m.b) G.clear()
 						}
 					}
 				}
