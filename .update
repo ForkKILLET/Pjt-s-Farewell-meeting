@@ -1,0 +1,20 @@
+#! /bin/env bash
+
+echo "Showing last update."
+	git log -1 HEAD
+
+echo -n "Headline: VER "; read h
+	v="${h%% *}"
+
+echo "Updating @version to 'v$v'"
+	sed -i 's/\(<i data-@="version">\).*<\/i>/<i data-@="version">v'$v'<\/i>/g' index.html
+
+echo "Writing headline to X clipboard."
+	echo "VER $h" | xclip -selection c 
+
+echo "Adding and commiting."
+	git add .
+	git commit
+
+exit 0
+

@@ -369,8 +369,14 @@ var j = {
 				if (j.vy > 0 && j.S === "SM") j.vy -= m.T.sticky.a()
 			}
 
-			if (x_ < 0) x_ += 600
-			if (x_ > 600) x_ -= 600
+			if (j.vx < 0 && x_ + j.s() < 0) {
+				x_ += 600
+				log("C", "Left wall")
+			}
+			if (j.vx > 0 && x_ > 600) {
+				x_ -= 600
+				log("C", "Right wall")
+			}
 
 			u.j(x_, y_)
 
