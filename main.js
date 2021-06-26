@@ -53,14 +53,9 @@ var dat = (id, min, max, step) => {
 
 var $ = (...P) => document.querySelector(...P)
 
-var ctx = id => $("#" + id).getContext("2d")
 var J = $("#img")
 
 var u = {
-	cs: ctx("stage"),
-	ca: ctx("action"),
-	cd: ctx("debug"),
-
 	j: (x, y) => {
 		u.ca.clearRect(j.x, j.y, ...j.sz())
 		u.ca.drawImage(J, j.x = x, j.y = y, ...j.sz())
@@ -78,8 +73,6 @@ var u = {
 }
 
 var D = {
-	iO: dat("If debug") (false),
-
 	vk: dat("Movement line scale", 1, 15, 1) (5),
 	iR: dat("If resultant force") (true),
 
@@ -152,15 +145,13 @@ var D = {
 		})
 	},
 
-	gen: () => {
-		if (D.iO()) D
-			.globalClear()
-			.watchMovement(p, "x")
-			.watchBox(p)
-			.watchMovement(j, "xy")
-			.watchBox(j)
-			.watchBlockCollision()
-	}
+	gen: () => D
+		.globalClear()
+		.watchMovement(p, "x")
+		.watchBox(p)
+		.watchMovement(j, "xy")
+		.watchBox(j)
+		.watchBlockCollision()
 }
 
 var G = {
@@ -404,9 +395,21 @@ var j = {
 }
 
 window.onload = () => {
-	const actions = {
+	const $c = $("#canvas")
+	for (const [ z, c ] of [ "stage", "action", "debug" ].entries()) {
+		const $i = document.createElement("canvas")
+		$i.id = "c-" + c
+		$i.width = "600"; $i.height = "400"
+		$i.style.zIndex = z
+		if (c === "debug") $i.style.display = "none"
+		$c.appendChild($i)
+
+		u["c" + c[0]] = $i.getContext("2d")
+	}
+
+	const ops = {
 		start: () => {
-			$("#start").disabled = "disabled"
+			$("#a-start").disabled = "disabled"
 			G.start()
 		},
 		reload: () => {
@@ -416,20 +419,27 @@ window.onload = () => {
 		clear: () => {
 			L.clear()
 			history.go()
+		},
+		debug: () => {
+			const s = $("#c-debug").style
+			s.display = { block: "none", none: "block" } [ s.display ]
 		}
 	}
+	const $o = $("#op"), k = {}
+	for (const [ o, f ] of Object.entries(ops)) {
+		const $i = document.createElement("button")
+		$i.id = "a-" + o
+		$i.innerHTML = o.replace(/^[a-z]/, c => c.toUpperCase())
+		$o.appendChild($i)
+		$i.addEventListener("click", f)
 
+		k[o[0]] = f
+	}
+	window.addEventListener("keypress", e => k[e.key]?.())
+	
 	if (L.start === "reload") {
 		delete L.start
-		actions.start()
+		ops.start()
 	}
-
-	const k = {}
-	for (let [ a, f ] of Object.entries(actions)) {
-		$("#" + a).addEventListener("click", f)
-		k[a[0]] = f
-	}
-
-	window.addEventListener("keypress", e => k[e.key]?.())
 }
 

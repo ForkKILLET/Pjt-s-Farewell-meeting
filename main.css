@@ -27,11 +27,8 @@ html, body {
 #canvas > canvas {
 	position: absolute;
 }
-canvas#stage	{ z-index: 0; }
-canvas#action	{ z-index: 1; }
-canvas#debug	{ z-index: 2; }
 
-#dat {
+#side {
 	position: fixed;
 	z-index: 100;
 	top: 0; left: 0;
@@ -44,15 +41,17 @@ canvas#debug	{ z-index: 2; }
 
     overflow-y: auto;
 }
-#dat::-webkit-scrollbar { display: none; }
-#dat {
+#op >e::-webkit-scrollbar { display: none; }
+#side {
 	scrollbar-width: none;
 	-ms-overflow-style: none;
 }
 
-#dat button {
+#op > button {
 	position: relative;
     top: -5px;
+
+	margin-right: 10px;
 }
 #dat label {
 	display: inline-block;
