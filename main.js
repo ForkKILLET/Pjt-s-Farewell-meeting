@@ -78,10 +78,10 @@ var u = {
 }
 
 var D = {
-	iO: dat("If debug")							(false),
+	iO: dat("If debug") (false),
 
-	vk: dat("Movement line scale", 1, 15, 1)	(5),
-	iR: dat("If resultant force")				(true),
+	vk: dat("Movement line scale", 1, 15, 1) (5),
+	iR: dat("If resultant force") (true),
 
 	hid: 100,
 	h_rep: f => {
@@ -164,6 +164,7 @@ var D = {
 }
 
 var G = {
+	pts: 0,
 	start: () => {
 		log("G", "Start")
 		G.alive = true
@@ -180,7 +181,7 @@ var G = {
 		u.cs.textAlign = "center"
 		u.cs.fillStyle = "red"
 
-		u.cs.fillText("Pjt over", 300, 200)
+		u.cs.fillText(`Pjt over, ${G.pts}pts`, 300, 200)
 	}
 }
 
@@ -192,10 +193,18 @@ var m = {
 
 	T: {
 		empty:	{ c: "white",		p: 10 },
-		normal:	{ c: "black",		p: 60 },
-		paddy:	{ c: "yellow",		p: 20 },
-		sticky: { c: "springgreen",	p: 10 },
-		
+
+		normal:	{ c: "black",		p: 60, pts: 1 },
+		paddy:	{ c: "yellow",		p: 20, pts: 1,
+			f: () => j.vy = - j.vy + 1
+		},
+		sticky: { c: "springgreen",	p: 10, pts: 3,
+			a: dat("Block.sticky deceleration", .1, 1, .1) (.3),
+			f: () => {
+				j.S = "SM"
+			}
+		},
+
 		map: f => {
 			for (let K in m.T) if (K !== "map") if (f(m.T[K], K) === false) return
 		}
@@ -219,7 +228,7 @@ var m = {
 	}
 }
 
-var T = dat("Ms per tick", 50, 500, 50)			(50)
+var T = dat("Ms per tick", 50, 500, 50) (50)
 Object.assign(T, {
 	tid: null,
 	_h: [],
@@ -228,11 +237,11 @@ Object.assign(T, {
 })
 
 var p = {
-	l: dat("Plate length", 10, 200, 5)			(100),
-	a: dat("Plate acceleration", 1, 10, 1)		(5),
-	Mv: dat("Plate speed limit", 1, 30, 1)		(20),
-	r: dat("Plate resistance", .1, 1, .1)		(1),
-	μ: dat("Plate friction %", 0, 100, 5)		(50),
+	l: dat("Plate length", 10, 200, 5) (100),
+	a: dat("Plate acceleration", 1, 10, 1) (5),
+	Mv: dat("Plate speed limit", 1, 30, 1) (20),
+	r: dat("Plate resistance", .1, 1, .1) (1),
+	μ: dat("Plate friction %", 0, 100, 5) (50),
 
 	v: 0,
 	x: null, y: m.Mh,
@@ -274,16 +283,16 @@ var p = {
 }
 
 var j = {
-	s: dat("Pjt size", 20, 100, 10)				(60),
-	ds: dat("Pjt spring deformation", 1, 50, 5)	(10),
-	vs: dat("Pjt spring speed", 1, 20, 1)		(10),
-	es: dat("Pjt spring energy %", 0, 120, 5)	(100),
+	s: dat("Pjt size", 20, 100, 10) (60),
+	ds: dat("Pjt spring deformation", 1, 50, 5) (10),
+	vs: dat("Pjt spring speed", 1, 20, 1) (10),
+	es: dat("Pjt spring energy %", 0, 120, 5) (100),
 	x: null, y: null,
 
 	fy: null, sy: null,
 	S: null,
 
-	g: dat("Gravity acceleration", 1, 20, 1)	(1),
+	g: dat("Gravity acceleration", 1, 20, 1) (1),
 	vx: 0, vy: 0,
 
 	ctr: () => [ j.x + j.s() / 2, j.y + (j.s() + j.sy) / 2 ],
@@ -297,6 +306,7 @@ var j = {
 	},
 	rep: () => {
 		switch (j.S) {
+		case "SM":
 		case "M":
 			let x_ = j.x + j.vx, y_ = j.y + j.vy
 
@@ -305,7 +315,7 @@ var j = {
 				y_ = j.fy
 
 				const fx = j.ctr()[0]
-				
+
 				if (fx >= p.x && fx <= p.x + p.l()) {
 					log("C", "Plate")
 
@@ -322,7 +332,7 @@ var j = {
 			}
 			else {
 				if (y_ < m.Mr) {
-					const lc = Math.max(~~ (x_ / 30), 0), rc = Math.min(~~ ((x_ + j.s()) / 30 - .5), m.mw)
+					const lc = Math.max(~~ (x_ / 30), 0), rc = Math.min(~~ ((x_ + j.s()) / 30 - .5), m.mw - 1)
 					const ur = Math.max(~~ (y_ / 15), 0), dr = Math.min(~~ ((y_ + j.s()) / 15 - .5), m.mr)
 					const R = j.s() / 2, cx = x_ + R, cy = y_ + R
 
@@ -332,10 +342,19 @@ var j = {
 							Math.min(Math.abs(cy - r * 15), Math.abs(cy - (r + 1) * 15)) ** 2
 						) < R) {
 							log("C", `Block (${c}, ${r})`, { c, r })
+
+							const K = m.a[c][r], V = m.T[K]
+							if (K === "empty") continue
+							u.b(c, r, "empty")
+
+							if (V.f) V.f()
+							G.pts += V.pts
 						}
 					}
 				}
+
 				j.vy += j.g()
+				if (j.vy > 0 && j.S === "SM") j.vy -= m.T.sticky.a()
 			}
 
 			if (x_ < 0) x_ += 600
