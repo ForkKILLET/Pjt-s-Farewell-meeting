@@ -74,7 +74,7 @@ var u = {
 		u.cn.clearRect(0, 100, 600, 150)
 		u.cn.fillText(s, 300, 200)
 
-		t && setTimeout(() => u.N(""), t)
+		if (t) N.tid = setTimeout(() => u.N(""), t)
 	}
 }
 
@@ -178,6 +178,8 @@ var G = {
 
 		u.cn.font = "40px Serif"
 		u.cn.fillStyle = "red"
+
+		clearTimeout(N.tid)
 		u.N(t)
 
 		clearInterval(T.tid)
