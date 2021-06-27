@@ -71,6 +71,8 @@ var u = {
 		u.cp.fillRect(p.x = x, p.y, ...p.sz())
 	},
 	N: (s, t) => {
+		N.tid && clearTimeout(N.tid = 0)
+
 		u.cn.clearRect(0, 100, 600, 150)
 		u.cn.fillText(s, 300, 200)
 
@@ -178,8 +180,6 @@ var G = {
 
 		u.cn.font = "40px Serif"
 		u.cn.fillStyle = "red"
-
-		clearTimeout(N.tid)
 		u.N(t)
 
 		clearInterval(T.tid)
