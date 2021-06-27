@@ -69,6 +69,12 @@ var u = {
 		u.cp.fillStyle = "red"
 		u.cp.clearRect(p.x - .5, p.y, p.l() + 1, 15)
 		u.cp.fillRect(p.x = x, p.y, ...p.sz())
+	},
+	N: (s, t) => {
+		u.cn.clearRect(0, 100, 600, 150)
+		u.cn.fillText(s, 300, 200)
+
+		t && setTimeout(() => u.N(""), t)
 	}
 }
 
@@ -156,21 +162,20 @@ var D = {
 
 var G = {
 	pts: 0,
-	playing: false,
+	ing: false,
 
 	start: () => {
 		log("G", "Start")
-		G.playing = true
+		G.ing = true
 
-		; [ m, p, j, D, T ].forEach(M => M.gen())
+		; [ m, p, j, D, T, N ].forEach(M => M.gen())
 	},
 	end: t => {
-		G.playing = false
+		G.ing = false
 
-		u.cp.font = "40px Serif"
-		u.cp.textAlign = "center"
-		u.cp.fillStyle = "red"
-		u.cp.fillText(t, 300, 200)
+		u.cn.font = "40px Serif"
+		u.cn.fillStyle = "red"
+		u.N(t)
 
 		clearInterval(T.tid)
 	},
@@ -193,23 +198,26 @@ var m = {
 	mh: 20,		Mh: 20 * 15,
 
 	T: {
-		empty:	{ c: "white",		p: 10 },
-		normal:	{ c: "black",		p: 60,	pts: 1
+		empty:	{ c: "white",		p: 20 },
+		normal:	{ c: "black",		p: 50,	pts: 1
 		},
-		paddy:	{ c: "yellow",		p: 25,	pts: 1,
+		paddy:	{ c: "yellow",		p: 20,	pts: 2, sg: true,
 			a: dat("Block.paddy acceleration", .1, 2, .1) (1),
-			f: () => {
-				j.vy = Math.abs(j.vy) + m.T.paddy.a()
-				return false
-			}
+			f: () => j.vy = Math.abs(j.vy) + m.T.paddy.a()
 		},
 		sticky: { c: "springgreen",	p: 5,	pts: 3,
 			a: dat("Block.sticky deceleration", .1, 1, .1) (.3),
 			f: () => j.S = "SM"
 		},
+		noisy:	{ c: "orange",		p: 5,	pts: 3, sg: true,
+			f: () => {
+				m.T.paddy.f()
+				u.N(N.res(), 3000)
+			}
+		},
 
 		map: f => {
-			for (let K in m.T) if (K !== "map") if (f(m.T[K], K) === false) return
+			for (let K in m.T) if (K !== "map") if (! f(m.T[K], K)) return
 		}
 	},
 
@@ -228,8 +236,8 @@ var m = {
 				if (p < V.p) {
 					if (K !== "empty") m.b ++
 					u.b(c, r, K)
-					return false
 				}
+				else return true
 			})
 		}
 	}
@@ -258,7 +266,7 @@ var p = {
 
 	gen: () => {
 		window.addEventListener("keydown", e => {
-			if (! G.playing) return
+			if (! G.ing) return
 
 			let d = [ "ArrowLeft",  "ArrowRight" ].indexOf(e.key)
 			if (d < 0) return
@@ -269,7 +277,7 @@ var p = {
 		})
 		T.hook(p)
 
-		if (G.playing) u.p((m.Mw - p.l()) / 2)
+		if (G.ing) u.p((m.Mw - p.l()) / 2)
 	},
 	rep: () => {
 		if (! p.v) return
@@ -286,6 +294,28 @@ var p = {
 			x_ = d < 0 ? lx : rx
 		}
 		u.p(x_)
+	}
+}
+
+var N = {
+	_r: [
+		"干嘛哒！",
+		"就要这样！",
+		"你脑子有点问题。",
+		"你也不要读书了。",
+		"我好好读书的！",
+		"是的是的！",
+		"摆事实讲道理……",
+		"老师我想出去溜达一下！",
+		"爸爸爸爸爸爸爸爸",
+		"🎺↑↓↑↓"
+	],
+	res: () => N._r[ ~~ (Math.random() * 1.e8) % N._r.length ],
+
+	gen: () => {
+		u.cn.font = "40px Sans-serif"
+		u.cn.textAlign = "center"
+		u.cn.fillStyle = "orange"
 	}
 }
 
@@ -360,11 +390,11 @@ var j = {
 							if (K === "empty") continue
 							u.b(c, r, "empty")
 
-							const con = V.f?.()
+							V.f?.()
 							G.pts += V.pts
 							if (! -- m.b) G.clear()
 
-							if (con === false) break
+							if (V.sg) break
 						}
 					}
 				}
@@ -409,7 +439,8 @@ var j = {
 
 window.onload = () => {
 	const $c = $("#canvas")
-	for (const [ z, c ] of [ "stage", "plate", "jintao", "debug" ].entries()) {
+	const cvs = [ "stage", "plate", "jintao", "noise", "debug" ]
+	for (const [ z, c ] of cvs.entries()) {
 		const $i = document.createElement("canvas")
 		$i.id = "c-" + c
 		$i.width = "600"; $i.height = "400"
