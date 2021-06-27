@@ -196,7 +196,7 @@ var G = {
 }
 
 var m = {
-	a: null, b: 0,
+	a: null, b: null,
 
 	mr: 4,		Mr: (4 + 1) * 15,
 	mw: 20,		Mw: 20 * 30,
@@ -227,6 +227,7 @@ var m = {
 	},
 
 	gen: R => {
+		m.b = 0
 		m.a = Array.from({ length: m.mh }, () => [])
 
 		if (! R) {
