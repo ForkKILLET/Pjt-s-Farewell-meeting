@@ -151,7 +151,7 @@ var D = {
 		})
 	},
 
-	gen: () => D
+	gen: R => R || D
 		.globalClear()
 		.watchMovement(p, "x")
 		.watchBox(p)
@@ -161,14 +161,17 @@ var D = {
 }
 
 var G = {
-	pts: 0,
+	pts: null,
 	ing: false,
 
-	start: () => {
-		log("G", "Start")
+	start: R => {
+		R && G.end("")
+
+		log("G", R ? "Restart" : "Start")
+		G.pts = 0
 		G.ing = true
 
-		; [ m, p, j, D, T, N ].forEach(M => M.gen())
+		; [ m, p, j, D, T, N ].forEach(M => M.gen(R))
 	},
 	end: t => {
 		G.ing = false
@@ -221,14 +224,16 @@ var m = {
 		}
 	},
 
-	gen: () => {
+	gen: R => {
 		m.a = Array.from({ length: m.mh }, () => [])
 
-		let pa = 0
-		m.T.map(V => pa = V.p += pa)
+		if (! R) {
+			let pa = 0
+			m.T.map(V => pa = V.p += pa)
 
-		u.cs.fillStyle = "white"
-		u.cs.fillRect(0, 0, 600, 400)
+			u.cs.fillStyle = "white"
+			u.cs.fillRect(0, 0, 600, 400)
+		}
 
 		for (let r = 0; r <= m.mr; r ++) for (let c = 0; c < m.mw; c ++) {
 			const p =  ~~ (Math.random() * 100)
@@ -248,7 +253,7 @@ Object.assign(T, {
 	tid: null,
 	_h: [],
 	hook: o => T._h.push(() => o.rep()),
-	gen: () => T.tid = setInterval(() => T._h.forEach(f => f()), T())
+	gen: _R => T.tid = setInterval(() => T._h.forEach(f => f()), T())
 })
 
 var p = {
@@ -258,14 +263,18 @@ var p = {
 	r: dat("Plate resistance", .1, 1, .1) (1),
 	μ: dat("Plate friction %", 0, 100, 5) (50),
 
-	v: 0,
+	v: null,
 	x: null, y: m.Mh,
 
 	ctr: () => [ p.x + p.l() / 2, p.y + 15 / 2 ],
 	sz: () => [ p.l(), 15 ],
 
-	gen: () => {
-		window.addEventListener("keydown", e => {
+	gen: R => {
+		p.v = 0
+		u.p((m.Mw - p.l()) / 2)
+
+		R || T.hook(p)
+		R || window.addEventListener("keydown", e => {
 			if (! G.ing) return
 
 			let d = [ "ArrowLeft",  "ArrowRight" ].indexOf(e.key)
@@ -275,9 +284,6 @@ var p = {
 			if (Math.abs(p.v) > p.Mv()) p.v = d * p.Mv()
 			log("Vp", "A " + p.v.toFixed(2))
 		})
-		T.hook(p)
-
-		if (G.ing) u.p((m.Mw - p.l()) / 2)
 	},
 	rep: () => {
 		if (! p.v) return
@@ -312,34 +318,39 @@ var N = {
 	],
 	res: () => N._r[ ~~ (Math.random() * 1.e8) % N._r.length ],
 
-	gen: () => {
-		u.cn.font = "40px Sans-serif"
-		u.cn.textAlign = "center"
+	gen: R => {
+		if (! R) {
+			u.cn.font = "40px Sans-serif"
+			u.cn.textAlign = "center"
+		}
 		u.cn.fillStyle = "orange"
 	}
 }
 
 var j = {
 	s: dat("Pjt size", 20, 100, 10) (60),
+
 	ds: dat("Pjt spring deformation", 1, 50, 5) (10),
 	vs: dat("Pjt spring speed", 1, 20, 1) (10),
 	es: dat("Pjt spring energy %", 0, 120, 5) (100),
-	x: null, y: null,
-
 	fy: null, sy: null,
 	S: null,
 
 	g: dat("Gravity acceleration", .1, 2, .1) (1),
-	vx: 0, vy: 0,
+	vx: null, vy: null,
+
+	x: null, y: null,
 
 	ctr: () => [ j.x + j.s() / 2, j.y + (j.s() + j.sy) / 2 ],
 	sz: () => [ j.s(), j.s() + j.sy ],
 
-	gen: () => {
+	gen: R => {
 		j.S = "M"
+		j.vx = j.vy = 0
+
 		u.j((m.Mw - j.s()) / 2, m.Mr)
 
-		T.hook(j)
+		R || T.hook(j)
 	},
 	rep: () => {
 		switch (j.S) {
@@ -384,11 +395,11 @@ var j = {
 							lx <= cx && cx <= rx && Δy < R ||
 							uy <= cy && cy <= dy && Δx < R
 						) {
-							log("C", `Block (${c}, ${r})`, { c, r })
-
 							const K = m.a[c][r], V = m.T[K]
 							if (K === "empty") continue
 							u.b(c, r, "empty")
+
+							log("C", `Block (${c}, ${r})`, { c, r })
 
 							V.f?.()
 							G.pts += V.pts
@@ -451,19 +462,14 @@ window.onload = () => {
 		u["c" + c[0]] = $i.getContext("2d")
 	}
 
+	let R = false
 	const ops = {
 		start: () => {
-			$("#a-start").disabled = "disabled"
-			G.start()
+			if (! R) $("#a-start").innerHTML = "Restart"
+			G.start(R)
+			R = true
 		},
-		reload: () => {
-			L.start = "reload"
-			history.go()
-		},
-		clear: () => {
-			L.clear()
-			history.go()
-		},
+		clear: () => L.clear(),
 		debug: () => {
 			const s = $("#c-debug").style
 			s.display = { block: "none", none: "block" } [ s.display ]
@@ -481,10 +487,5 @@ window.onload = () => {
 		k[o[0]] = f
 	}
 	window.addEventListener("keypress", e => k[e.key]?.())
-	
-	if (L.start === "reload") {
-		delete L.start
-		ops.start()
-	}
 }
 
