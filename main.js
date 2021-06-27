@@ -57,8 +57,8 @@ var J = $("#img")
 
 var u = {
 	j: (x, y) => {
-		u.ca.clearRect(j.x, j.y, ...j.sz())
-		u.ca.drawImage(J, j.x = x, j.y = y, ...j.sz())
+		u.cj.clearRect(j.x, j.y, ...j.sz())
+		u.cj.drawImage(J, j.x = x, j.y = y, ...j.sz())
 	},
 	b: (x, y, v) => {
 		m.a[x][y] = v
@@ -66,9 +66,9 @@ var u = {
 		u.cs.fillRect(x * 30 + 1, y * 15 + 1, 28, 14)
 	},
 	p: x => {
-		u.cs.fillStyle = "red"
-		u.cs.clearRect(p.x - .5, p.y, p.l() + 1, 15)
-		u.cs.fillRect(p.x = x, p.y, ...p.sz())
+		u.cp.fillStyle = "red"
+		u.cp.clearRect(p.x - .5, p.y, p.l() + 1, 15)
+		u.cp.fillRect(p.x = x, p.y, ...p.sz())
 	}
 }
 
@@ -167,10 +167,10 @@ var G = {
 	end: t => {
 		G.playing = false
 
-		u.ca.font = "40px Serif"
-		u.ca.textAlign = "center"
-		u.ca.fillStyle = "red"
-		u.ca.fillText(t, 300, 200)
+		u.cp.font = "40px Serif"
+		u.cp.textAlign = "center"
+		u.cp.fillStyle = "red"
+		u.cp.fillText(t, 300, 200)
 
 		clearInterval(T.tid)
 	},
@@ -198,7 +198,10 @@ var m = {
 		},
 		paddy:	{ c: "yellow",		p: 25,	pts: 1,
 			a: dat("Block.paddy acceleration", .1, 2, .1) (1),
-			f: () => j.vy = - j.vy + m.T.paddy.a()
+			f: () => {
+				j.vy = Math.abs(j.vy) + m.T.paddy.a()
+				return false
+			}
 		},
 		sticky: { c: "springgreen",	p: 5,	pts: 3,
 			a: dat("Block.sticky deceleration", .1, 1, .1) (.3),
@@ -215,6 +218,9 @@ var m = {
 
 		let pa = 0
 		m.T.map(V => pa = V.p += pa)
+
+		u.cs.fillStyle = "white"
+		u.cs.fillRect(0, 0, 600, 400)
 
 		for (let r = 0; r <= m.mr; r ++) for (let c = 0; c < m.mw; c ++) {
 			const p =  ~~ (Math.random() * 100)
@@ -293,7 +299,7 @@ var j = {
 	fy: null, sy: null,
 	S: null,
 
-	g: dat("Gravity acceleration", 1, 20, 1) (1),
+	g: dat("Gravity acceleration", .1, 2, .1) (1),
 	vx: 0, vy: 0,
 
 	ctr: () => [ j.x + j.s() / 2, j.y + (j.s() + j.sy) / 2 ],
@@ -333,25 +339,32 @@ var j = {
 			}
 			else {
 				if (y_ < m.Mr) {
-					const lc = Math.max(~~ (x_ / 30), 0), rc = Math.min(~~ ((x_ + j.s()) / 30 - .5), m.mw - 1)
-					const ur = Math.max(~~ (y_ / 15), 0), dr = Math.min(~~ ((y_ + j.s()) / 15 - .5), m.mr)
+					const lc = Math.max(~~ (x_ / 30), 0), rc = Math.min(~~ ((x_ + j.s()) / 30 - .001), m.mw - 1)
+					const ur = Math.max(~~ (y_ / 15), 0), dr = Math.min(~~ ((y_ + j.s()) / 15 - .001), m.mr)
 					const R = j.s() / 2, cx = x_ + R, cy = y_ + R
 
 					for (let r = ur; r <= dr; r ++) for (let c = lc; c <= rc; c ++) {
-						if (Math.sqrt(
-							Math.min(Math.abs(cx - c * 30), Math.abs(cx - (c + 1) * 30)) ** 2 +
-							Math.min(Math.abs(cy - r * 15), Math.abs(cy - (r + 1) * 15)) ** 2
-						) < R) {
+						const lx = c * 30, rx = lx + 30
+						const uy = r * 15, dy = uy + 15
+						const Δx = Math.min(Math.abs(cx - lx), Math.abs(cx - rx))
+						const Δy = Math.min(Math.abs(cy - uy), Math.abs(cy - dy))
+
+						if (
+							Math.sqrt(Δx ** 2 + Δy ** 2) < R ||
+							lx <= cx && cx <= rx && Δy < R ||
+							uy <= cy && cy <= dy && Δx < R
+						) {
 							log("C", `Block (${c}, ${r})`, { c, r })
 
 							const K = m.a[c][r], V = m.T[K]
 							if (K === "empty") continue
 							u.b(c, r, "empty")
 
-							if (V.f) V.f()
+							const con = V.f?.()
 							G.pts += V.pts
-
 							if (! -- m.b) G.clear()
+
+							if (con === false) break
 						}
 					}
 				}
@@ -396,7 +409,7 @@ var j = {
 
 window.onload = () => {
 	const $c = $("#canvas")
-	for (const [ z, c ] of [ "stage", "action", "debug" ].entries()) {
+	for (const [ z, c ] of [ "stage", "plate", "jintao", "debug" ].entries()) {
 		const $i = document.createElement("canvas")
 		$i.id = "c-" + c
 		$i.width = "600"; $i.height = "400"
@@ -423,7 +436,8 @@ window.onload = () => {
 		debug: () => {
 			const s = $("#c-debug").style
 			s.display = { block: "none", none: "block" } [ s.display ]
-		}
+		},
+		pause: () => { debugger }
 	}
 	const $o = $("#op"), k = {}
 	for (const [ o, f ] of Object.entries(ops)) {
