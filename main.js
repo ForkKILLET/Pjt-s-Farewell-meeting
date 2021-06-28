@@ -557,7 +557,9 @@ window.onload = () => {
 
 		k[o[0]] = f
 	}
-	window.addEventListener("keypress", e => k[e.key]?.())
+	window.addEventListener("keypress", e => {
+		if ("#modal".style.display !== "block") k[e.key]?.()
+	})
 
 	; [ "dat", "pts" ].forEach(id => {
 		if (Q.has("-" + id)) $("#" + id).style.display = "none"
