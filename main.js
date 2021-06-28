@@ -10,7 +10,6 @@ var log = (t, s, D) => {
 }
 Object.assign(log, {
 	c: {
-		Vp:	"black",
 		D:	"lawngreen",
 		C:	"orange",
 		G:	"silver"
@@ -18,9 +17,12 @@ Object.assign(log, {
 	_h: []
 })
 
+var Q = new URLSearchParams(location.search)
+
 var L = new Proxy({
 	clear: () => localStorage.clear()
 }, {
+	has: (_, K) => L[K] !== null,
 	get: (_, K) => {
 		if ([ "clear" ].includes(K)) return _[K]
 		const V = localStorage.getItem(K)
@@ -71,7 +73,7 @@ var u = {
 		u.cp.fillRect(p.x = x, p.y, ...p.sz())
 	},
 	N: (s, t) => {
-		N.tid && clearTimeout(N.tid = 0)
+		N.tid && clearTimeout(N.tid)
 
 		u.cn.clearRect(0, 100, 600, 150)
 		u.cn.fillText(s, 300, 200)
@@ -153,7 +155,7 @@ var D = {
 		})
 	},
 
-	gen: R => R || D
+	ini: () => G.R || D
 		.globalClear()
 		.watchMovement(p, "x")
 		.watchBox(p)
@@ -163,19 +165,50 @@ var D = {
 }
 
 var G = {
-	pts: null,
+	R: false,
 	ing: false,
 
-	start: R => {
-		R && G.end("")
+	pts: null,
+	ptsa: L["pts:all"] ?? [],
+	ptsi: (n, p) => {
+		L["pts:" + n] = p
 
-		log("G", R ? "Restart" : "Start")
+		let l = 0, r = G.ptsa.length - 1, m
+		const a = G.ptsa
+		while (l <= r) {
+			m = ~~ ((l + r) / 2)
+			if (a[m][1] <= p)
+				r = m - 1
+			else
+				l = m + 1
+		}
+		a.splice(l, 0, [ n, p ])
+		L["pts:all"] = a
+
+		return l
+	},
+	ptse: (n, p, k) => {
+		const $i = document.createElement("li")
+		$i.innerHTML = `<span>${n}</span><span>${p}</span>`
+		$("#l-ptss").insertBefore($i, $("#l-ptss").children[k])
+	},
+
+	go: n => {
+		G.n = n
+		G.start()
+	},
+
+	start: () => {
+		G.R && u.N("")
+
+		log("G", G.R ? "Restart" : "Start")
 		G.pts = 0
 		G.ing = true
 
-		; [ m, p, j, D, T, N ].forEach(M => M.gen(R))
+		; [ m, p, j, D, T, N ].forEach(M => M.ini())
 	},
 	end: t => {
+		G.R = true
 		G.ing = false
 
 		u.cn.font = "40px Serif"
@@ -183,15 +216,23 @@ var G = {
 		u.N(t)
 
 		clearInterval(T.tid)
-	},
 
+		if (G.n) {
+			G.ptse(G.n, G.pts, G.ptsi(G.n, G.pts))
+			G.n = null
+
+			const $o = $("#o-register")
+			$o.disabled = ""
+			$o.innerHTML = "Register"
+		}
+	},
 	over: () => {
 		log("G", "Over")
-		G.end(`Pjt over, ${G.pts}pts`)
+		G.end(`Pjt over! ${G.pts}pts`)
 	},
 	clear: () => {
 		log("G", "Clear")
-		G.end(`Stage clear, ${G.pts}pts`)
+		G.end(`Stage clear! ${G.pts}pts`)
 	}
 }
 
@@ -226,11 +267,11 @@ var m = {
 		}
 	},
 
-	gen: R => {
+	ini: () => {
 		m.b = 0
 		m.a = Array.from({ length: m.mh }, () => [])
 
-		if (! R) {
+		if (! G.R) {
 			let pa = 0
 			m.T.map(V => pa = V.p += pa)
 
@@ -256,7 +297,7 @@ Object.assign(T, {
 	tid: null,
 	_h: [],
 	hook: o => T._h.push(() => o.rep()),
-	gen: _R => T.tid = setInterval(() => T._h.forEach(f => f()), T())
+	ini: () => T.tid = setInterval(() => T._h.forEach(f => f()), T())
 })
 
 var p = {
@@ -272,12 +313,12 @@ var p = {
 	ctr: () => [ p.x + p.l() / 2, p.y + 15 / 2 ],
 	sz: () => [ p.l(), 15 ],
 
-	gen: R => {
+	ini: () => {
 		p.v = 0
 		u.p((m.Mw - p.l()) / 2)
 
-		R || T.hook(p)
-		R || window.addEventListener("keydown", e => {
+		G.R || T.hook(p)
+		G.R || window.addEventListener("keydown", e => {
 			if (! G.ing) return
 
 			let d = [ "ArrowLeft",  "ArrowRight" ].indexOf(e.key)
@@ -285,7 +326,6 @@ var p = {
 			d = d ? 1 : -1
 			p.v += d * p.a()
 			if (Math.abs(p.v) > p.Mv()) p.v = d * p.Mv()
-			log("Vp", "A " + p.v.toFixed(2))
 		})
 	},
 	rep: () => {
@@ -293,13 +333,11 @@ var p = {
 		const d = p.v / Math.abs(p.v)
 		p.v -= d * p.r()
 		if (p.v * d < 0) p.v = 0
-		log("Vp", "F " + p.v.toFixed(2))
 
 		let x_ = p.x + p.v
 		const lx = 0, rx = m.Mw - p.l()
 		if (x_ < lx || x_ > rx) {
 			p.v = 0
-			log("Vp", "H 0")
 			x_ = d < 0 ? lx : rx
 		}
 		u.p(x_)
@@ -310,6 +348,7 @@ var N = {
 	_r: [
 		"干嘛哒！",
 		"就要这样！",
+		"什么牛马？",
 		"你脑子有点问题。",
 		"你也不要读书了。",
 		"我好好读书的！",
@@ -321,8 +360,8 @@ var N = {
 	],
 	res: () => N._r[ ~~ (Math.random() * 1.e8) % N._r.length ],
 
-	gen: R => {
-		if (! R) {
+	ini: () => {
+		if (! G.R) {
 			u.cn.font = "40px Sans-serif"
 			u.cn.textAlign = "center"
 		}
@@ -347,13 +386,13 @@ var j = {
 	ctr: () => [ j.x + j.s() / 2, j.y + (j.s() + j.sy) / 2 ],
 	sz: () => [ j.s(), j.s() + j.sy ],
 
-	gen: R => {
+	ini: () => {
 		j.S = "M"
 		j.vx = j.vy = 0
 
 		u.j((m.Mw - j.s()) / 2, m.Mr)
 
-		R || T.hook(j)
+		G.R || T.hook(j)
 	},
 	rep: () => {
 		switch (j.S) {
@@ -451,6 +490,30 @@ var j = {
 	}
 }
 
+var S = {
+	ini: () => {
+		G.ptsa.forEach(([ n, p ], k) => G.ptse(n, p, k))
+
+		const $r = $("#i-register"), $o = $("#o-register")
+		const g = () => {
+			let n = $r.value
+			$r.value = ""
+
+			if (! n.trim().length || ("pts:" + n) in L) return
+
+			$("#modal").style.display = "none"
+			$o.innerHTML = n
+			$o.disabled = "disabled"
+
+			G.go(n)
+		}
+		$r.addEventListener("keydown", e => {
+			if (e.key === "Enter") g()
+		})
+		$("#o-go").addEventListener("click", g)
+	}
+}
+
 window.onload = () => {
 	const $c = $("#canvas")
 	const cvs = [ "stage", "plate", "jintao", "noise", "debug" ]
@@ -465,12 +528,14 @@ window.onload = () => {
 		u["c" + c[0]] = $i.getContext("2d")
 	}
 
-	let R = false
 	const ops = {
 		start: () => {
-			if (! R) $("#a-start").innerHTML = "Restart"
-			G.start(R)
-			R = true
+			$("#o-start").innerHTML = "Restart"
+			G.start()
+		},
+		register: () => {
+			$("#modal").style.display = "flex"
+			setTimeout(() => $("#i-register").focus(), 200)
 		},
 		clear: () => L.clear(),
 		debug: () => {
@@ -480,9 +545,12 @@ window.onload = () => {
 		pause: () => { debugger }
 	}
 	const $o = $("#op"), k = {}
+
 	for (const [ o, f ] of Object.entries(ops)) {
+		if (Q.has("-" + o)) continue
+
 		const $i = document.createElement("button")
-		$i.id = "a-" + o
+		$i.id = "o-" + o
 		$i.innerHTML = o.replace(/^[a-z]/, c => c.toUpperCase())
 		$o.appendChild($i)
 		$i.addEventListener("click", f)
@@ -490,5 +558,11 @@ window.onload = () => {
 		k[o[0]] = f
 	}
 	window.addEventListener("keypress", e => k[e.key]?.())
+
+	; [ "dat", "pts" ].forEach(id => {
+		if (Q.has("-" + id)) $("#" + id).style.display = "none"
+	})
+
+	S.ini()
 }
 

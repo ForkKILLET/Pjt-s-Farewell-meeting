@@ -1,5 +1,6 @@
-html, body {
+* {
 	margin: 0;
+	outline: none;
 }
 
 @media (max-width: 480px) {
@@ -53,6 +54,10 @@ html, body {
 
 	margin-right: 10px;
 }
+#o-register:disabled {
+	color: blue;
+}
+
 #dat label {
 	display: inline-block;
 	width: 230px;
@@ -69,6 +74,60 @@ html, body {
 
 	color: black;
     text-shadow: 0 0 5px silver;
+}
+
+#l-ptss > li > span:first-child {
+	display: inline-block;
+	width: 200px;
+}
+#l-ptss > li:nth-child(1) > span:first-child {
+	color: yellow;
+	text-shadow: 0 0 5px gold;
+	font-weight: bold;
+}
+#l-ptss > li:nth-child(2) > span:first-child {
+	color: red;
+	font-weight: bold;
+}
+#l-ptss > li:nth-child(3) > span:first-child {
+	color: blue;
+	font-weight: bold;
+}
+
+#l-ptss > li > span:last-child {
+    display: inline-block;
+    width: 100px;
+}
+#l-ptss > li:nth-child(2n)     > span:first-child { background-color: #ffffffaa; }
+#l-ptss > li:nth-child(2n)     > span:last-child  { background-color: #c0c0c0aa; }
+#l-ptss > li:nth-child(2n + 1) > span:first-child { background-color: #c0c0c0aa; }
+#l-ptss > li:nth-child(2n + 1) > span:last-child  { background-color: #ffffffaa; }
+
+#modal {
+    position: fixed;
+    z-index: 101;
+    left: 25%;
+    top: 40%;
+
+    display: none;
+	justify-content: space-between;
+    width: 50%;
+    height: 80px;
+    padding: 10px;
+
+    border: 1px solid;
+    border-radius: 15px;
+    background-color: white;
+}
+
+#i-register {
+	flex-basis: 70%;
+	padding: 0 10px;
+	font-size: 28px;
+}
+#o-go {
+	flex-basis: 20%;
+	font-size: 28px;
 }
 
 #about {
